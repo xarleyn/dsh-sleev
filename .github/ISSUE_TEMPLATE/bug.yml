@@ -1,0 +1,67 @@
+name: Bug report
+description: Report reproducible incorrect behavior
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Please remove prompts, headers, credentials, secrets, and private filesystem paths from logs.
+  - type: input
+    id: plugin-version
+    attributes:
+      label: Plugin version
+      placeholder: 0.1.0-alpha.0
+    validations:
+      required: true
+  - type: input
+    id: dsh-version
+    attributes:
+      label: DeepSeek Harness version
+      placeholder: 0.1.1-rc.2
+    validations:
+      required: true
+  - type: input
+    id: sleev-version
+    attributes:
+      label: Sleev version
+      placeholder: 1.7.7
+    validations:
+      required: true
+  - type: input
+    id: provider-route
+    attributes:
+      label: DSH provider route alias
+      placeholder: sleev-neuraldeep
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options: [Windows, macOS, Linux, Other]
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction
+      description: Include exact steps, sanitized route configuration, and whether direct routing still works.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Sanitized logs
+      render: shell

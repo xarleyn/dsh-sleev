@@ -2,6 +2,14 @@
   "name": "dsh-sleev",
   "version": "0.1.0-alpha.0",
   "description": "Sleev routing observability for DeepSeek Harness",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/xarleyn/dsh-sleev.git"
+  },
+  "homepage": "https://github.com/xarleyn/dsh-sleev#readme",
+  "bugs": {
+    "url": "https://github.com/xarleyn/dsh-sleev/issues"
+  },
   "type": "module",
   "main": "lib/index.js",
   "types": "lib/types/index.d.ts",
@@ -31,6 +39,7 @@
     "cordis.patch.yml",
     "docs/*",
     "README.md",
+    "README.zh-CN.md",
     "LICENSE"
   ],
   "scripts": {
@@ -39,15 +48,19 @@
     "format:write": "prettier --write . --end-of-line auto",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "test:package": "node scripts/verify-package.mjs",
+    "smoke:packed": "node scripts/smoke-packed-dsh.mjs",
     "build": "pnpm run clean && tsdown && tsc -p tsconfig.build.json",
     "smoke:neuraldeep": "tsx scripts/smoke-neuraldeep.ts",
-    "check": "pnpm run format && pnpm run typecheck && pnpm run test && pnpm run build",
-    "prepare": "tsdown && tsc -p tsconfig.build.json"
+    "check": "pnpm run format && pnpm run typecheck && pnpm run test && pnpm run build && pnpm run test:package",
+    "prepare": "tsdown && tsc -p tsconfig.build.json",
+    "prepublishOnly": "pnpm run check"
   },
   "keywords": [
     "deepseek",
     "deepseek-harness",
     "dsh",
+    "dsh-plugin",
     "sleev",
     "context-optimization"
   ],
