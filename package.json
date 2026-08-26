@@ -14,6 +14,10 @@
       "types": "./lib/types/shared/telemetry.d.ts",
       "default": "./lib/shared/telemetry.js"
     },
+    "./sleev": {
+      "types": "./lib/types/host/optimizer/sleev/headers.d.ts",
+      "default": "./lib/host/optimizer/sleev/headers.js"
+    },
     "./package.json": "./package.json"
   },
   "dsh": {
@@ -25,7 +29,7 @@
     "lib/**/*.js",
     "lib/types/**/*.d.ts",
     "cordis.patch.yml",
-    "docs/*.yml",
+    "docs/*",
     "README.md",
     "LICENSE"
   ],

@@ -28,6 +28,12 @@ The package is already linked into the local DSH web profile. Add
 `dsh-sleev` to that profile's `dsh.profile.bundles` list after the first build,
 then restart the host if bundle HMR does not pick up a newly added bundle.
 
-The exact Sleev gateway URL and routing headers are being verified separately;
-`docs/sample-settings.yml` will remain explicit about any values that must be
-confirmed locally.
+See [the sample settings](docs/sample-settings.yml) for known-provider and
+custom-upstream `llm-pi-ai` routes, and [the development guide](docs/development.md)
+for local installation and smoke testing.
+
+Sleev does not currently document a native DeepSeek Harness identifier. The
+sample's `sleev-harness: pi` value is an explicit experimental compatibility
+choice, not a promise of first-party support. A real account-backed streaming,
+tools, and usage smoke test remains required before calling the compatibility
+spike complete.

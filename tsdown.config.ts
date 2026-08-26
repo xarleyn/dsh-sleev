@@ -5,6 +5,7 @@ export default defineConfig({
   entry: {
     index: "src/index.ts",
     "shared/telemetry": "src/shared/telemetry.ts",
+    "host/optimizer/sleev/headers": "src/host/optimizer/sleev/headers.ts",
   },
   outDir: "lib",
   format: ["esm"],
