@@ -10,6 +10,18 @@
 - Use concise conventional commit subjects that describe the delivered outcome.
 - Do not rewrite or squash earlier milestone commits unless the user asks.
 
+## Documentation discipline
+
+- Update the relevant Markdown files whenever user-visible behavior,
+  installation, configuration, compatibility, CI/CD, or release behavior
+  changes.
+- Keep `README.md` and `README.zh-CN.md` aligned in structure and technical
+  meaning; update both in the same milestone when shared content changes.
+- Keep commands, package names, versions, badges, and cross-document links
+  current. Do not leave copied documentation that describes another plugin.
+- Update focused documents under `docs/` when their subject changes instead of
+  overloading the README with implementation detail.
+
 ## Architecture invariants
 
 - Never mutate DSH `GenerateOptions` or downstream `StreamChunk` objects.

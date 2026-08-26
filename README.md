@@ -1,12 +1,51 @@
 # dsh-sleev
 
-Early DeepSeek Harness integration for observing provider routes that pass
-through the external Sleev context-optimization gateway.
+[![CI](https://github.com/xarleyn/dsh-sleev/actions/workflows/ci.yml/badge.svg)](https://github.com/xarleyn/dsh-sleev/actions/workflows/ci.yml)
+[![npm version](https://img.shields.io/npm/v/dsh-sleev.svg)](https://www.npmjs.com/package/dsh-sleev)
+[![npm downloads](https://img.shields.io/npm/dm/dsh-sleev.svg)](https://www.npmjs.com/package/dsh-sleev)
+[![Node.js](https://img.shields.io/node/v/dsh-sleev.svg)](package.json)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
+English · [简体中文](README.zh-CN.md)
+
+Early [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)
+integration for observing provider routes that pass through the external Sleev
+context-optimization gateway.
 
 The current M1 build is intentionally host-only. It does not rewrite prompts,
-does not implement compaction, and does not route traffic by itself. Routing is
-configured as a normal `@deepseek-ai/dsh-llm-pi-ai` provider profile; this
-plugin observes matching route aliases at the `llm/stream` boundary.
+implement compaction, or route traffic by itself. Routing is configured as a
+normal `@deepseek-ai/dsh-llm-pi-ai` provider profile; this plugin observes
+matching route aliases at the `llm/stream` boundary.
+
+## Installation
+
+Install the published npm package by name:
+
+```bash
+dsh plugin --profile web add dsh-sleev
+```
+
+Or install the latest source directly with a GitHub package specifier:
+
+```bash
+dsh plugin --profile web add github:xarleyn/dsh-sleev
+```
+
+GitHub dependencies are built from source, so pnpm may ask you to approve this
+package's `prepare` script. The npm package is recommended when you do not want
+install-time build permission.
+
+If you manage a profile package manually, the corresponding dependency commands
+are `pnpm add dsh-sleev` and `pnpm add github:xarleyn/dsh-sleev`.
+
+Remove the plugin with:
+
+```bash
+dsh plugin --profile web remove dsh-sleev
+```
+
+Restart the DeepSeek Harness host if bundle hot reload does not pick up a newly
+installed plugin.
 
 ## Current behavior
 
@@ -17,24 +56,92 @@ plugin observes matching route aliases at the `llm/stream` boundary.
 - retains a bounded secret-free in-memory history;
 - logs one structured completion record per observed call.
 
+The observer never stores prompts, request headers, credentials, or secret
+values. Direct routes that do not match the configured Sleev aliases remain
+unobserved.
+
+## Configure a Sleev route
+
+Merge a provider route into `$DSH_HOME/settings.yaml` under
+`llm-pi-ai.providers`. DSH resolves the credential reference; never place the
+literal API key in the route configuration.
+
+```yaml
+llm-pi-ai:
+  providers:
+    sleev-neuraldeep:
+      displayName: Sleev / neuraldeep
+      apiKeyEnv: NEURALDEEP_API_KEY
+      api: openai-completions
+      baseURL: http://127.0.0.1:17321/v1
+      headers:
+        sleev-base-url: https://api.neuraldeep.ru/v1
+        sleev-harness: pi
+      models:
+        - id: gpt-oss-20b
+          name: GPT OSS 20B via Sleev
+```
+
+Use `sleev-provider` instead of `sleev-base-url` for a provider known to Sleev;
+do not combine both headers on one route. See
+[the sample settings](docs/sample-settings.yml) for both forms.
+
+Sleev does not currently document a native DeepSeek Harness identifier. The
+sample's `sleev-harness: pi` value is an explicit experimental compatibility
+choice, not a promise of first-party support.
+
+## Requirements
+
+- Node.js `^22.19.0` or `>=24.0.0`;
+- DeepSeek Harness `>=0.1.1-rc.2 <0.2.0`;
+- Cordis `^4.0.1`;
+- a configured and running Sleev gateway for routed model calls.
+
 ## Development
 
-```powershell
+```bash
 pnpm install
 pnpm check
 ```
 
-The package is already linked into the local DSH web profile. Add
-`dsh-sleev` to that profile's `dsh.profile.bundles` list after the first build,
-then restart the host if bundle HMR does not pick up a newly added bundle.
+Build and link the checkout into a Web profile:
 
-See [the sample settings](docs/sample-settings.yml) for known-provider and
-custom-upstream `llm-pi-ai` routes, and [the development guide](docs/development.md)
-for local installation and smoke testing. The current verified versions and
-wire capabilities are recorded in [the compatibility matrix](docs/compatibility.md).
+```bash
+pnpm build
+dsh plugin --profile web add .
+dsh --profile web --dump-config
+```
 
-Sleev does not currently document a native DeepSeek Harness identifier. The
-sample's `sleev-harness: pi` value is an explicit experimental compatibility
-choice, not a promise of first-party support. It has passed an account-backed
-NeuralDeep streaming, usage, tool-call, and tool-result smoke test with Sleev
-1.7.7 and DSH 0.1.1-rc.2.
+Run the account-backed NeuralDeep smoke separately when credentials and the
+local gateway are available:
+
+```bash
+pnpm smoke:neuraldeep
+```
+
+The live provider smoke is deliberately not part of required CI because it
+depends on credentials, a local gateway, and an external provider. See the
+[development guide](docs/development.md) for setup and retry behavior.
+
+## Compatibility
+
+The complete DSH → llm-pi-ai → Sleev → NeuralDeep streaming path has passed
+ordinary completion, usage, tool-call, and tool-result checks with DeepSeek
+Harness `0.1.1-rc.2`, Sleev `1.7.7`, and NeuralDeep `gpt-oss-20b`.
+
+This establishes transport compatibility, not token savings. The tiny test
+prompt exposed Sleev's fixed instruction overhead; a long tool-heavy session is
+still needed for a meaningful compression benchmark. See the
+[compatibility notes](docs/compatibility.md) for exact evidence.
+
+## Releases
+
+Releases are built from existing `v`-prefixed SemVer tags by the manual
+[Release workflow](.github/workflows/release.yml). It verifies the exact tag,
+runs the quality gate, applies the tag version to the packed manifest, tests a
+clean DSH profile install, creates a checksum and GitHub Release, and can
+optionally publish to npm through trusted publishing.
+
+Prerelease tags use the npm `next` dist-tag; stable tags use `latest`. npm
+publishing is disabled by default and requires an `npm` GitHub environment plus
+an npm trusted-publisher configuration for `release.yml`.
