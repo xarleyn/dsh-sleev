@@ -48,5 +48,22 @@ DSH adapter is `llm-pi-ai`; treat it as an experimental compatibility value.
 Keep it easy to override, and verify tools, streaming, and usage on every Sleev
 upgrade until Sleev publishes a native DSH identifier.
 
-Do not consider the wire spike complete until a configured account passes a
-real request with tool calls and a provider `usage` chunk.
+Only record a version pair as compatible after a configured account passes a
+real request with tools and a provider `usage` chunk; the matrix records the
+first version pair that met that bar.
+
+## NeuralDeep compatibility smoke
+
+With `NEURALDEEP_API_KEY` available in the environment, run:
+
+```powershell
+pnpm smoke:neuraldeep
+```
+
+The script compares a direct and Sleev-routed short prompt, then performs a
+tool-call and tool-result continuation through Sleev. It requires provider
+usage on every successful call and exits non-zero if stream/tool semantics are
+lost. Normalized provider errors are retried up to three times because the free
+NeuralDeep route can be transiently unavailable.
+
+The first verified run is recorded in [compatibility.md](compatibility.md).

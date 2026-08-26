@@ -1,2 +1,9 @@
 packages:
   - .
+
+# Optional pi-ai backends publish no-op lifecycle scripts that this package
+# does not need for OpenAI-compatible smoke tests.
+allowBuilds:
+  "@google/genai": false
+  esbuild: true
+  protobufjs: false

@@ -30,10 +30,11 @@ then restart the host if bundle HMR does not pick up a newly added bundle.
 
 See [the sample settings](docs/sample-settings.yml) for known-provider and
 custom-upstream `llm-pi-ai` routes, and [the development guide](docs/development.md)
-for local installation and smoke testing.
+for local installation and smoke testing. The current verified versions and
+wire capabilities are recorded in [the compatibility matrix](docs/compatibility.md).
 
 Sleev does not currently document a native DeepSeek Harness identifier. The
 sample's `sleev-harness: pi` value is an explicit experimental compatibility
-choice, not a promise of first-party support. A real account-backed streaming,
-tools, and usage smoke test remains required before calling the compatibility
-spike complete.
+choice, not a promise of first-party support. It has passed an account-backed
+NeuralDeep streaming, usage, tool-call, and tool-result smoke test with Sleev
+1.7.7 and DSH 0.1.1-rc.2.

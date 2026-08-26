@@ -19,18 +19,16 @@ llm-pi-ai:
           contextWindow: 128000
           maxTokens: 16384
 
-    # An arbitrary OpenAI-compatible upstream. Do not combine sleev-provider
-    # and sleev-base-url on the same route.
-    sleev-custom:
-      displayName: Sleev / custom upstream
-      apiKeyEnv: CUSTOM_UPSTREAM_API_KEY
+    # Verified custom OpenAI-compatible upstream. Do not combine
+    # sleev-provider and sleev-base-url on the same route.
+    sleev-neuraldeep:
+      displayName: Sleev / neuraldeep
+      apiKeyEnv: NEURALDEEP_API_KEY
       api: openai-completions
       baseURL: http://127.0.0.1:17321/v1
       headers:
-        sleev-base-url: https://upstream.example/v1
+        sleev-base-url: https://api.neuraldeep.ru/v1
         sleev-harness: pi
       models:
-        - id: replace-with-upstream-model-id
-          name: Replace with upstream model
-          contextWindow: 128000
-          maxTokens: 16384
+        - id: gpt-oss-20b
+          name: GPT OSS 20B via Sleev
