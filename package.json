@@ -1,10 +1,10 @@
 {
   "name": "dsh-sleev",
-  "version": "0.1.0-alpha.0",
+  "version": "0.0.1",
   "description": "Sleev routing observability for DeepSeek Harness",
   "repository": {
     "type": "git",
-    "url": "https://github.com/xarleyn/dsh-sleev.git"
+    "url": "git+https://github.com/xarleyn/dsh-sleev.git"
   },
   "homepage": "https://github.com/xarleyn/dsh-sleev#readme",
   "bugs": {

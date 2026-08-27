@@ -6,7 +6,7 @@ const SEMVER_TAG =
 const [tag, mode] = process.argv.slice(2);
 if (tag === undefined || !SEMVER_TAG.test(tag)) {
   throw new Error(
-    "release tag must be an exact SemVer prefixed with v, for example v0.1.0 or v0.1.0-rc.1",
+    "release tag must be an exact SemVer prefixed with v, for example v0.0.1 or v0.0.1-rc.1",
   );
 }
 if (mode !== undefined && mode !== "--write") {

@@ -154,12 +154,14 @@ still needed for a meaningful compression benchmark. See the
 
 ## Releases
 
-Releases are built from existing `v`-prefixed SemVer tags by the manual
+Pushing a `v`-prefixed SemVer tag starts the
 [Release workflow](.github/workflows/release.yml). It verifies the exact tag,
 runs the quality gate, applies the tag version to the packed manifest, tests a
-clean DSH profile install, creates a checksum and GitHub Release, and can
-optionally publish to npm through trusted publishing.
+clean DSH profile install, creates a checksum, and publishes a GitHub Release.
+The same workflow can be started manually for an existing tag to optionally
+publish the tested artifact to npm through trusted publishing.
 
 Prerelease tags use the npm `next` dist-tag; stable tags use `latest`. npm
-publishing is disabled by default and requires an `npm` GitHub environment plus
-an npm trusted-publisher configuration for `release.yml`.
+publishing is disabled for tag pushes and by default for manual runs. Enabling
+it requires an `npm` GitHub environment plus an npm trusted-publisher
+configuration for `release.yml`.

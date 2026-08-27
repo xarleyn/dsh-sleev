@@ -175,11 +175,12 @@ token。这种极短提示词对比预期不利，因为尚无可回收的旧历
 
 ## 发布
 
-手动 [Release workflow](.github/workflows/release.yml) 从现有的 `v` 前缀
-SemVer tag 构建发布。流程会校验准确 tag、执行质量门、把 tag 版本写入打包
-manifest、测试干净 DSH profile 安装、生成校验和及 GitHub Release，并可选
-通过 trusted publishing 发布到 npm。
+推送带 `v` 前缀的 SemVer tag 会启动
+[Release workflow](.github/workflows/release.yml)。流程会校验准确 tag、执行质量门、
+把 tag 版本写入打包 manifest、测试干净 DSH profile 安装、生成校验和并发布
+GitHub Release。也可以针对已有 tag 手动启动同一流程，并可选通过 trusted
+publishing 将已测试的制品发布到 npm。
 
-预发布 tag 使用 npm `next` dist-tag，稳定版本使用 `latest`。npm 发布默认
-关闭；启用时需要 GitHub `npm` environment，以及 npm 中针对 `release.yml`
-配置的 trusted publisher。
+预发布 tag 使用 npm `next` dist-tag，稳定版本使用 `latest`。tag 推送不会发布到
+npm，手动运行时 npm 发布也默认关闭；启用时需要 GitHub `npm` environment，
+以及 npm 中针对 `release.yml` 配置的 trusted publisher。

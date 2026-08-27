@@ -1,10 +1,13 @@
 name: Release
 
 on:
+  push:
+    tags:
+      - "v*.*.*"
   workflow_dispatch:
     inputs:
       tag:
-        description: Existing SemVer tag to release (for example v0.1.0-rc.1)
+        description: Existing SemVer tag to release (for example v0.0.1)
         required: true
         type: string
       publish_npm:
@@ -17,7 +20,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: release-${{ inputs.tag }}
+  group: release-${{ inputs.tag || github.ref_name }}
   cancel-in-progress: false
 
 jobs:
@@ -33,12 +36,12 @@ jobs:
       - name: Check out release tag
         uses: actions/checkout@v7
         with:
-          ref: ${{ inputs.tag }}
+          ref: ${{ inputs.tag || github.ref_name }}
           fetch-depth: 0
 
       - name: Verify exact tag checkout
         env:
-          RELEASE_TAG: ${{ inputs.tag }}
+          RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
         shell: bash
         run: |
           if [[ "$(git tag --points-at HEAD --list "$RELEASE_TAG")" != "$RELEASE_TAG" ]]; then
@@ -65,7 +68,7 @@ jobs:
       - name: Apply version from tag
         id: metadata
         env:
-          RELEASE_TAG: ${{ inputs.tag }}
+          RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
         shell: bash
         run: node scripts/prepare-release.mjs "$RELEASE_TAG" --write >> "$GITHUB_OUTPUT"
 
@@ -114,7 +117,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-          RELEASE_TAG: ${{ inputs.tag }}
+          RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
           PRERELEASE: ${{ needs.package.outputs.prerelease }}
         shell: bash
         run: |
@@ -130,7 +133,7 @@ jobs:
 
   npm-publish:
     name: Publish to npm
-    if: ${{ inputs.publish_npm }}
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.publish_npm }}
     needs: [package, github-release]
     runs-on: ubuntu-latest
     environment: npm
