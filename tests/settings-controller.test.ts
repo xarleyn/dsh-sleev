@@ -98,8 +98,8 @@ describe("Sleev settings card controller", () => {
     expect(face.hooks.sleevSettings.getSnapshot()).toMatchObject({
       available: true,
       dirty: false,
-      routePrefixes: "sleev-",
-      maxRecentCalls: "100",
+      routePrefixes: { text: "sleev-", overridden: false, invalid: false },
+      maxRecentCalls: { text: "100", overridden: false, invalid: false },
     });
 
     face.edit("maxRecentCalls", "0");
@@ -111,7 +111,7 @@ describe("Sleev settings card controller", () => {
     expect(face.hooks.sleevSettings.getSnapshot()).toMatchObject({
       dirty: false,
       invalid: false,
-      maxRecentCalls: "100",
+      maxRecentCalls: { text: "100", overridden: false, invalid: false },
     });
     expect(scope.writes).toEqual([]);
     controller.dispose();
@@ -129,9 +129,12 @@ describe("Sleev settings card controller", () => {
     await vi.waitFor(() => {
       expect(face.hooks.sleevSettings.getSnapshot()).toMatchObject({
         dirty: false,
-        overridden: true,
-        routes: "sleev-a\nsleev-b",
-        logLevel: "debug",
+        routes: {
+          text: "sleev-a\nsleev-b",
+          overridden: true,
+          invalid: false,
+        },
+        logLevel: { text: "debug", overridden: true, invalid: false },
       });
     });
     expect(scope.writes).toContainEqual([
@@ -140,17 +143,19 @@ describe("Sleev settings card controller", () => {
       ["sleev-a", "sleev-b"],
     ]);
 
-    face.resetDefaults();
+    face.resetField("routes");
+    face.resetField("logLevel");
     expect(face.hooks.sleevSettings.getSnapshot()).toMatchObject({
       dirty: true,
-      routes: "",
-      logLevel: "info",
+      routes: { text: "", overridden: false, invalid: false },
+      logLevel: { text: "info", overridden: false, invalid: false },
     });
     face.save();
     await vi.waitFor(() => {
       expect(face.hooks.sleevSettings.getSnapshot()).toMatchObject({
         dirty: false,
-        overridden: false,
+        routes: { overridden: false },
+        logLevel: { overridden: false },
       });
     });
     expect(scope.writes).toContainEqual(["unset", "routes"]);
@@ -170,9 +175,24 @@ describe("Sleev settings card controller", () => {
       expect(face.hooks.sleevSettings.getSnapshot()).toMatchObject({
         dirty: true,
         failed: true,
-        logLevel: "debug",
+        logLevel: { text: "debug", overridden: true },
       });
     });
+    controller.dispose();
+  });
+
+  it("does not enable saving for an edit equivalent to the current value", () => {
+    const scope = new FakeScope();
+    const controller = new SleevSettingsController(scope);
+    const face = controller.inject();
+
+    face.edit("routePrefixes", " sleev- \nsleev-");
+    expect(face.hooks.sleevSettings.getSnapshot()).toMatchObject({
+      dirty: false,
+      invalid: false,
+      routePrefixes: { text: "sleev-", overridden: false },
+    });
+    expect(scope.writes).toEqual([]);
     controller.dispose();
   });
 });

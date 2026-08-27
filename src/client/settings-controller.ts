@@ -14,11 +14,17 @@ export interface SleevSettings {
   readonly logLevel?: SleevLogLevel;
 }
 
-type Field = keyof SleevSettings;
+export type SleevSettingsField = keyof SleevSettings;
 
 interface Draft {
   readonly text: string;
   readonly reset: boolean;
+}
+
+export interface SleevSettingsFieldState {
+  readonly text: string;
+  readonly overridden: boolean;
+  readonly invalid: boolean;
 }
 
 export interface SleevSettingsCardState {
@@ -28,21 +34,28 @@ export interface SleevSettingsCardState {
   readonly invalid: boolean;
   readonly saving: boolean;
   readonly failed: boolean;
-  readonly overridden: boolean;
-  readonly routes: string;
-  readonly routePrefixes: string;
-  readonly maxRecentCalls: string;
-  readonly logLevel: SleevLogLevel;
+  readonly routes: SleevSettingsFieldState;
+  readonly routePrefixes: SleevSettingsFieldState;
+  readonly maxRecentCalls: SleevSettingsFieldState;
+  readonly logLevel: SleevSettingsFieldState;
 }
 
 export interface SleevSettingsCardFace {
   readonly hooks: {
     readonly sleevSettings: SnapshotStore<SleevSettingsCardState>;
   };
-  readonly edit: (field: Field, value: string) => void;
+  readonly edit: (field: SleevSettingsField, value: string) => void;
   readonly save: () => void;
   readonly discard: () => void;
-  readonly resetDefaults: () => void;
+  readonly resetField: (field: SleevSettingsField) => void;
+}
+
+interface PlanEntry {
+  readonly field: SleevSettingsField;
+  readonly draft: Draft;
+  readonly action: "set" | "unset";
+  readonly value?: unknown;
+  readonly invalid: boolean;
 }
 
 const DEFAULTS: Required<SleevSettings> = {
@@ -67,9 +80,13 @@ function parseLines(value: string): string[] {
   ];
 }
 
-/** Staged form controller for the official plugin-configuration slot. */
+function equal(left: unknown, right: unknown): boolean {
+  return JSON.stringify(left) === JSON.stringify(right);
+}
+
+/** Staged form controller matching DSH's built-in plugin settings cards. */
 export class SleevSettingsController {
-  private readonly drafts = new Map<Field, Draft>();
+  private readonly drafts = new Map<SleevSettingsField, Draft>();
   private readonly store: SnapshotStore<SleevSettingsCardState>;
   private readonly unsubscribe: () => void;
   private saving = false;
@@ -84,7 +101,12 @@ export class SleevSettingsController {
     return {
       hooks: { sleevSettings: this.store },
       edit: (field, value) => {
-        this.drafts.set(field, { text: value, reset: false });
+        const parsed = this.parse(field, value);
+        if (parsed !== undefined && equal(parsed, this.effective()[field])) {
+          this.drafts.delete(field);
+        } else {
+          this.drafts.set(field, { text: value, reset: false });
+        }
         this.failed = false;
         this.publish();
       },
@@ -94,23 +116,14 @@ export class SleevSettingsController {
         this.failed = false;
         this.publish();
       },
-      resetDefaults: () => {
-        const snapshot = this.scope.getSnapshot();
-        const user = snapshot.user as Record<string, unknown> | undefined;
-        const base = { ...DEFAULTS, ...(snapshot.base as SleevSettings) };
-        for (const field of Object.keys(DEFAULTS) as Field[]) {
-          if (user !== undefined && Object.hasOwn(user, field)) {
-            const value = base[field];
-            this.drafts.set(field, {
-              text:
-                field === "routes" || field === "routePrefixes"
-                  ? lines(value as string[])
-                  : String(value),
-              reset: true,
-            });
-          } else {
-            this.drafts.delete(field);
-          }
+      resetField: (field) => {
+        if (this.stored(field)) {
+          this.drafts.set(field, {
+            text: this.format(field, this.base()[field]),
+            reset: true,
+          });
+        } else {
+          this.drafts.delete(field);
         }
         this.failed = false;
         this.publish();
@@ -122,45 +135,92 @@ export class SleevSettingsController {
     this.unsubscribe();
   }
 
+  private base(): Required<SleevSettings> {
+    return { ...DEFAULTS, ...(this.scope.getSnapshot().base as SleevSettings) };
+  }
+
   private effective(): Required<SleevSettings> {
     return { ...DEFAULTS, ...this.scope.getSnapshot().value };
   }
 
-  private value(field: Field): string {
-    const draft = this.drafts.get(field);
-    if (draft !== undefined) return draft.text;
-    const current = this.effective();
+  private stored(field: SleevSettingsField): boolean {
+    const user = this.scope.getSnapshot().user as
+      Record<string, unknown> | undefined;
+    return user !== undefined && Object.hasOwn(user, field);
+  }
+
+  private format(field: SleevSettingsField, value: unknown): string {
+    return field === "routes" || field === "routePrefixes"
+      ? lines(value as string[])
+      : String(value);
+  }
+
+  private parse(field: SleevSettingsField, text: string): unknown | undefined {
     if (field === "routes" || field === "routePrefixes") {
-      return lines(current[field]);
+      return parseLines(text);
     }
-    return String(current[field]);
+    if (field === "maxRecentCalls") {
+      const value = Number(text.trim());
+      return Number.isSafeInteger(value) && value > 0 ? value : undefined;
+    }
+    return ["off", "info", "debug"].includes(text)
+      ? (text as SleevLogLevel)
+      : undefined;
+  }
+
+  private fieldState(field: SleevSettingsField): SleevSettingsFieldState {
+    const draft = this.drafts.get(field);
+    if (draft === undefined) {
+      return {
+        text: this.format(field, this.effective()[field]),
+        overridden: this.stored(field),
+        invalid: false,
+      };
+    }
+    return {
+      text: draft.text,
+      overridden: !draft.reset,
+      invalid: !draft.reset && this.parse(field, draft.text) === undefined,
+    };
+  }
+
+  private plan(): PlanEntry[] {
+    const effective = this.effective();
+    const result: PlanEntry[] = [];
+    for (const [field, draft] of this.drafts) {
+      if (draft.reset) {
+        if (this.stored(field)) {
+          result.push({ field, draft, action: "unset", invalid: false });
+        }
+        continue;
+      }
+      const value = this.parse(field, draft.text);
+      if (value !== undefined && equal(value, effective[field])) continue;
+      result.push({
+        field,
+        draft,
+        action: "set",
+        value,
+        invalid: value === undefined,
+      });
+    }
+    return result;
   }
 
   private project(): SleevSettingsCardState {
     const snapshot = this.scope.getSnapshot();
-    const maxRecentCalls = this.value("maxRecentCalls");
-    const parsedMax = Number(maxRecentCalls.trim());
-    const logLevel = this.value("logLevel");
-    const invalid =
-      !Number.isSafeInteger(parsedMax) ||
-      parsedMax < 1 ||
-      !["off", "info", "debug"].includes(logLevel);
+    const plan = this.plan();
     return {
       available: snapshot.status === "ready",
       writable: snapshot.writable,
-      dirty: this.drafts.size > 0,
-      invalid,
+      dirty: plan.length > 0,
+      invalid: plan.some((entry) => entry.invalid),
       saving: this.saving,
       failed: this.failed,
-      overridden:
-        snapshot.user !== undefined &&
-        Object.keys(snapshot.user as Record<string, unknown>).length > 0,
-      routes: this.value("routes"),
-      routePrefixes: this.value("routePrefixes"),
-      maxRecentCalls,
-      logLevel: ["off", "info", "debug"].includes(logLevel)
-        ? (logLevel as SleevLogLevel)
-        : "info",
+      routes: this.fieldState("routes"),
+      routePrefixes: this.fieldState("routePrefixes"),
+      maxRecentCalls: this.fieldState("maxRecentCalls"),
+      logLevel: this.fieldState("logLevel"),
     };
   }
 
@@ -168,38 +228,30 @@ export class SleevSettingsController {
     const state = this.project();
     if (!state.dirty || state.invalid || state.saving || !state.writable)
       return;
-    const writes = [...this.drafts.entries()];
+    const writes = this.plan();
     this.saving = true;
     this.failed = false;
     this.publish();
     try {
-      for (const [field, draft] of writes) {
-        if (draft.reset) {
-          await this.scope.unset(field);
-        } else if (field === "routes" || field === "routePrefixes") {
-          await this.scope.set(field, parseLines(draft.text));
-        } else if (field === "maxRecentCalls") {
-          await this.scope.set(field, Number(draft.text.trim()));
+      for (const write of writes) {
+        if (write.action === "unset") {
+          await this.scope.unset(write.field);
         } else {
-          await this.scope.set(field, draft.text as SleevLogLevel);
+          await this.scope.set(write.field, write.value);
         }
       }
       const user = this.scope.getSnapshot().user as
         Record<string, unknown> | undefined;
-      const landed = writes.every(([field, draft]) => {
-        if (draft.reset)
-          return user === undefined || !Object.hasOwn(user, field);
-        const expected =
-          field === "routes" || field === "routePrefixes"
-            ? parseLines(draft.text)
-            : field === "maxRecentCalls"
-              ? Number(draft.text.trim())
-              : draft.text;
-        return JSON.stringify(user?.[field]) === JSON.stringify(expected);
-      });
+      const landed = writes.every((write) =>
+        write.action === "unset"
+          ? user === undefined || !Object.hasOwn(user, write.field)
+          : equal(user?.[write.field], write.value),
+      );
       if (landed) {
-        for (const [field, draft] of writes) {
-          if (this.drafts.get(field) === draft) this.drafts.delete(field);
+        for (const write of writes) {
+          if (this.drafts.get(write.field) === write.draft) {
+            this.drafts.delete(write.field);
+          }
         }
       } else {
         this.failed = true;

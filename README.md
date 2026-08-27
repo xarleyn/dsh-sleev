@@ -71,10 +71,12 @@ Open **Settings → Plugins → Plugin configuration → Sleev** to edit:
 - the in-memory recent-call limit;
 - structured telemetry logging (`off`, `info`, or `debug`).
 
-Edits are staged until **Save**, apply to the next matching call without a Host
-restart, and can be discarded or reset to the composition defaults. These
-settings decide what the plugin observes; model endpoints and Sleev routing
-headers still belong under `llm-pi-ai.providers` in DSH model settings.
+Edits are staged until **Save**, which is enabled only when the form has actual
+changes. Each overridden field can be reset to its composition default
+individually, and the card marks unsaved changes. Saved values apply to the next
+matching call without a Host restart. These settings decide what the plugin
+observes; model endpoints and Sleev routing headers still belong under
+`llm-pi-ai.providers` in DSH model settings.
 
 ## Configure a Sleev route
 

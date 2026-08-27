@@ -67,9 +67,10 @@ Harness 宿主。
 - 内存中最近调用记录的上限；
 - 结构化遥测日志级别（`off`、`info` 或 `debug`）。
 
-修改会暂存到点击**保存**时才写入，并从下一次匹配调用开始生效，无需重启
-Host；也可以放弃修改或恢复 composition 默认值。这些设置只决定插件观测哪些
-请求；模型 endpoint 和 Sleev routing header 仍在 DSH model settings 的
+修改会暂存到点击**保存**时才写入；只有表单存在实际变更时，保存按钮才会启用。
+每个已覆盖的字段都可以单独恢复 composition 默认值，卡片也会标记未保存的修改。
+保存后的值从下一次匹配调用开始生效，无需重启 Host。这些设置只决定插件观测
+哪些请求；模型 endpoint 和 Sleev routing header 仍在 DSH model settings 的
 `llm-pi-ai.providers` 下配置。
 
 ## 配置路由
