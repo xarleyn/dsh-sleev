@@ -12,10 +12,11 @@ Early [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)
 integration for observing provider routes that pass through the external Sleev
 context-optimization gateway.
 
-The current M1 build is intentionally host-only. It does not rewrite prompts,
-implement compaction, or route traffic by itself. Routing is configured as a
-normal `@deepseek-ai/dsh-llm-pi-ai` provider profile; this plugin observes
-matching route aliases at the `llm/stream` boundary.
+The current M1 observer does not rewrite prompts, implement compaction, or route
+traffic by itself. Routing is configured as a normal
+`@deepseek-ai/dsh-llm-pi-ai` provider profile; the Host observes matching route
+aliases at the `llm/stream` boundary, and the browser half exposes its observer
+settings in the standard Plugins page.
 
 ## Installation
 
@@ -45,7 +46,7 @@ dsh plugin --profile web remove dsh-sleev
 ```
 
 Restart the DeepSeek Harness host if bundle hot reload does not pick up a newly
-installed plugin.
+installed plugin or a newly added browser client.
 
 ## Current behavior
 
@@ -54,11 +55,26 @@ installed plugin.
 - yields every stream chunk unchanged;
 - records provider usage and effective input token volume;
 - retains a bounded secret-free in-memory history;
-- logs one structured completion record per observed call.
+- logs one structured completion record per observed call;
+- exposes observer matching, retention, and logging settings in the Web UI.
 
 The observer never stores prompts, request headers, credentials, or secret
 values. Direct routes that do not match the configured Sleev aliases remain
 unobserved.
+
+## Plugin settings card
+
+Open **Settings → Plugins → Plugin configuration → Sleev** to edit:
+
+- exact observed provider aliases;
+- observed provider-name prefixes;
+- the in-memory recent-call limit;
+- structured telemetry logging (`off`, `info`, or `debug`).
+
+Edits are staged until **Save**, apply to the next matching call without a Host
+restart, and can be discarded or reset to the composition defaults. These
+settings decide what the plugin observes; model endpoints and Sleev routing
+headers still belong under `llm-pi-ai.providers` in DSH model settings.
 
 ## Configure a Sleev route
 

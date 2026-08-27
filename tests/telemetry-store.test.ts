@@ -55,4 +55,22 @@ describe("call telemetry store", () => {
     handle.finish({ kind: "error", code: "LATE" });
     expect(store.listRecent()).toHaveLength(1);
   });
+
+  it("applies a changed retention bound without waiting for another call", () => {
+    const logger = { debug: vi.fn(), info: vi.fn() };
+    let config = resolveConfig({ maxRecentCalls: 3, logLevel: "off" });
+    let id = 0;
+    const store = new CallTelemetryStore(logger, () => config, {
+      now: () => 1,
+      createId: () => `call-${++id}`,
+    });
+    for (let index = 0; index < 3; index += 1) {
+      store.begin(request, "one-shot").finish({ kind: "success" });
+    }
+
+    config = resolveConfig({ maxRecentCalls: 1, logLevel: "off" });
+    store.reconfigure();
+
+    expect(store.listRecent()).toMatchObject([{ callId: "call-3" }]);
+  });
 });

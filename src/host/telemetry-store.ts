@@ -34,21 +34,25 @@ export class CallTelemetryStore {
 
   constructor(
     private readonly logger: TelemetryLogger,
-    private readonly config: ResolvedConfig,
+    config: ResolvedConfig | (() => ResolvedConfig),
     options: StoreOptions = {},
   ) {
+    this.readConfig = typeof config === "function" ? config : () => config;
     this.now = options.now ?? Date.now;
     this.createId = options.createId ?? randomUUID;
   }
 
+  private readonly readConfig: () => ResolvedConfig;
+
   /** Begin one call and return an idempotent lifecycle sink. */
   begin(options: GenerateOptions, kind: RequestKind): CallHandle {
+    const startConfig = this.readConfig();
     const callId = this.createId();
     const startedAt = this.now();
     let usage: ProviderUsageTelemetry | undefined;
     let finished = false;
 
-    if (this.config.logLevel === "debug") {
+    if (startConfig.logLevel === "debug") {
       this.logger.debug(
         `dsh-sleev: call-start ${JSON.stringify({ callId, provider: options.provider, model: options.model, kind, sessionId: options.sessionId })}`,
       );
@@ -81,15 +85,10 @@ export class CallTelemetryStore {
           result,
         });
         this.completed.push(telemetry);
-        if (this.completed.length > this.config.maxRecentCalls) {
-          this.completed.splice(
-            0,
-            this.completed.length - this.config.maxRecentCalls,
-          );
-        }
-        if (this.config.logLevel !== "off") {
+        const finishConfig = this.reconfigure();
+        if (finishConfig.logLevel !== "off") {
           const message = `dsh-sleev: call-end ${JSON.stringify(telemetry)}`;
-          if (this.config.logLevel === "debug") this.logger.debug(message);
+          if (finishConfig.logLevel === "debug") this.logger.debug(message);
           else this.logger.info(message);
         }
       },
@@ -99,5 +98,14 @@ export class CallTelemetryStore {
   /** Return a detached newest-last snapshot for diagnostics and future UI. */
   listRecent(): readonly OptimizerCallTelemetry[] {
     return this.completed.slice();
+  }
+
+  /** Apply a changed retention bound immediately and return its config. */
+  reconfigure(): ResolvedConfig {
+    const config = this.readConfig();
+    if (this.completed.length > config.maxRecentCalls) {
+      this.completed.splice(0, this.completed.length - config.maxRecentCalls);
+    }
+    return config;
   }
 }

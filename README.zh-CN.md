@@ -11,9 +11,10 @@
 `dsh-sleev` 是一个早期阶段的 DeepSeek Harness 集成，用于观测经由外部
 Sleev 上下文优化网关的提供商路由。
 
-当前 M1 版本仅在宿主侧运行。它不会改写提示词、不会实现压缩，也不会自行
-路由流量。路由需配置为普通的 `@deepseek-ai/dsh-llm-pi-ai` 提供商配置；
-本插件会在 `llm/stream` 边界观测匹配的路由别名。
+当前 M1 观测器不会改写提示词、不会实现压缩，也不会自行路由流量。路由需
+配置为普通的 `@deepseek-ai/dsh-llm-pi-ai` 提供商配置；Host 会在
+`llm/stream` 边界观测匹配的路由别名，browser 端则在标准插件页面提供观测
+设置。
 
 ## 安装
 
@@ -41,7 +42,8 @@ GitHub 依赖会从源码构建，因此 pnpm 可能要求批准本包的 `prepa
 dsh plugin --profile web remove dsh-sleev
 ```
 
-安装后，如新增 bundle 未被热更新加载，请重启 DeepSeek Harness 宿主。
+安装后，如新增 bundle 或 browser client 未被热更新加载，请重启 DeepSeek
+Harness 宿主。
 
 ## 当前行为
 
@@ -50,10 +52,25 @@ dsh plugin --profile web remove dsh-sleev
 - 原样转发每一个流式数据块；
 - 记录提供商 usage 和有效输入 token 数量；
 - 在内存中保留有界且不含敏感信息的历史记录；
-- 为每次完成的观测调用输出一条结构化日志。
+- 为每次完成的观测调用输出一条结构化日志；
+- 在 Web UI 中提供观测匹配、保留数量和日志设置。
 
 观测器不会存储提示词、请求 header、凭据或密钥。未匹配 Sleev 别名的直连
 路由不会被观测。
+
+## 插件设置卡片
+
+打开 **设置 → 插件 → 插件配置 → Sleev**，可以编辑：
+
+- 精确观测的提供商别名；
+- 观测的提供商名称前缀；
+- 内存中最近调用记录的上限；
+- 结构化遥测日志级别（`off`、`info` 或 `debug`）。
+
+修改会暂存到点击**保存**时才写入，并从下一次匹配调用开始生效，无需重启
+Host；也可以放弃修改或恢复 composition 默认值。这些设置只决定插件观测哪些
+请求；模型 endpoint 和 Sleev routing header 仍在 DSH model settings 的
+`llm-pi-ai.providers` 下配置。
 
 ## 配置路由
 
