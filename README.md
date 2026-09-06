@@ -6,6 +6,19 @@
 [![Node.js](https://img.shields.io/node/v/dsh-sleev.svg)](package.json)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
+> [!IMPORTANT]
+> **This repository has been archived.**
+>
+> Development of this plugin has moved to the **[xarleyn/dsh-plugins](https://github.com/xarleyn/dsh-plugins)** monorepo, which is now the canonical home for the project.
+>
+> Please use the new repository for:
+>
+> * new releases and updates;
+> * bug reports and feature requests;
+> * pull requests and further development.
+>
+> This repository is kept read-only for historical purposes.
+
 English · [简体中文](README.zh-CN.md)
 
 Early [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)
