@@ -1,3 +1,12 @@
+> [!IMPORTANT]
+> **This repository is archived and read-only.** The plugin moved into the
+> [`xarleyn/dsh-plugins`](https://github.com/xarleyn/dsh-plugins) monorepo and is published as
+> [`@yadsh/dsh-sleev`](https://www.npmjs.com/package/@yadsh/dsh-sleev)
+> (source: [`plugins/dsh-sleev`](https://github.com/xarleyn/dsh-plugins/tree/main/plugins/dsh-sleev)).
+> The legacy unscoped `dsh-sleev` package is superseded by `@yadsh/dsh-sleev`.
+
+---
+
 # dsh-sleev
 
 [![CI](https://github.com/xarleyn/dsh-sleev/actions/workflows/ci.yml/badge.svg)](https://github.com/xarleyn/dsh-sleev/actions/workflows/ci.yml)
